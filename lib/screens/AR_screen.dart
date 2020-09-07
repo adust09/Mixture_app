@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
 import 'package:arkit_plugin/arkit_plugin.dart';
 import 'package:vector_math/vector_math_64.dart' as vector;
+import 'Result_screen.dart';
 
 class ARScreen extends StatefulWidget {
   static const routeName = '/ar';
@@ -69,5 +70,7 @@ class _ARScreenState extends State<ARScreen> {
       builder: (BuildContext context) =>
           AlertDialog(content: Text('宝を見つけました！おめでとう！')),
     );
+    Navigator.of(context)
+        .push(MaterialPageRoute(builder: (context) => ResultScreen()));
   }
 }

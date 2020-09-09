@@ -17,9 +17,11 @@ class ARScreen extends StatefulWidget {
 class _ARScreenState extends State<ARScreen> {
   ARKitController arkitController;
   ARKitSphere sphere;
+  Timer timer;
 
   @override
   void dispose() {
+    timer?.cancel();
     arkitController?.dispose();
     super.dispose();
   }
@@ -27,7 +29,7 @@ class _ARScreenState extends State<ARScreen> {
   @override
   Widget build(BuildContext context) =>
       Scaffold(
-        appBar: AppBar(title: const Text('AR Screen')),
+        appBar: AppBar(title: const Text('アクションをしろ！')),
         body: Container(
           child: ARKitSceneView(
             enableTapRecognizer: true,
@@ -41,9 +43,9 @@ class _ARScreenState extends State<ARScreen> {
     this.arkitController.onNodeTap = (nodes) => onNodeTapHandler(nodes);
 
     final material = ARKitMaterial(
-        diffuse: ARKitMaterialProperty(
-          color: Colors.yellow,
-        ));
+      lightingModelName: ARKitLightingModel.lambert,
+      diffuse: ARKitMaterialProperty(image: 'images/earth.jpg'),
+        );
     sphere = ARKitSphere(
       materials: [material],
       radius: 0.1,
@@ -53,18 +55,22 @@ class _ARScreenState extends State<ARScreen> {
       name: 'sphere',
       geometry: sphere,
       position: vector.Vector3(0, 0, -0.5),
+      eulerAngles: vector.Vector3.zero(),
     );
     this.arkitController.add(node);
+
+    timer = Timer.periodic(Duration(milliseconds: 50), (timer) {
+      final old = node.eulerAngles.value;
+      final rotation = vector.Vector3(old.x, old.y + 0.1, old.z);
+      node.eulerAngles.value = rotation;
+    });
   }
+  
+
 
   onNodeTapHandler(List<String> nodesList) {
     final name = nodesList.first;
-    final color = sphere.materials.value.first.diffuse.color == Colors.yellow
-        ? Colors.blue
-        : Colors.yellow;
-    sphere.materials.value = [
-      ARKitMaterial(diffuse: ARKitMaterialProperty(color: color))
-    ];
+
     showDialog<void>(
       context: context,
       builder: (BuildContext context) =>

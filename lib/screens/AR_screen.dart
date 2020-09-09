@@ -18,6 +18,7 @@ class _ARScreenState extends State<ARScreen> {
   ARKitController arkitController;
   ARKitSphere sphere;
   Timer timer;
+  bool anchorWasFound = false;
 
   @override
   void dispose() {
@@ -31,41 +32,73 @@ class _ARScreenState extends State<ARScreen> {
       Scaffold(
         appBar: AppBar(title: const Text('アクションをしろ！')),
         body: Container(
-          child: ARKitSceneView(
-            enableTapRecognizer: true,
-            onARKitViewCreated: onARKitViewCreated,
-          ),
+            child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  ARKitSceneView(
+                    detectionImages: const [
+                      ARKitReferenceImage(
+                          name: 'https://avatars0.githubusercontent.com/u/55534054?s=460&u=402783902455ae84995129488dd3a12d0699fd84&v=4',//ここにfirebaseのCloud storageから取得した画像情報を格納する。→隠し場所
+                          physicalWidth: 0.2,
+                      ),
+                    ],
+                    onARKitViewCreated: onARKitViewCreated,
+                    enableTapRecognizer: true,
+                  ),
+                  anchorWasFound
+                      ? Container()
+                      : Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Text(
+                      '隠したオブジェクトを見つけてね！',
+                      style: Theme
+                          .of(context)
+                          .textTheme
+                          .headline5
+                          .copyWith(color: Colors.white),
+                    ),
+                  )
+                ]
+            )
         ),
       );
 
   void onARKitViewCreated(ARKitController arKitController) {
     this.arkitController = arKitController;
     this.arkitController.onNodeTap = (nodes) => onNodeTapHandler(nodes);
-
-    final material = ARKitMaterial(
-      lightingModelName: ARKitLightingModel.lambert,
-      diffuse: ARKitMaterialProperty(image: 'images/earth.jpg'),
-        );
-    sphere = ARKitSphere(
-      materials: [material],
-      radius: 0.1,
-    );
-
-    final node = ARKitNode(
-      name: 'sphere',
-      geometry: sphere,
-      position: vector.Vector3(0, 0, -0.5),
-      eulerAngles: vector.Vector3.zero(),
-    );
-    this.arkitController.add(node);
-
-    timer = Timer.periodic(Duration(milliseconds: 50), (timer) {
-      final old = node.eulerAngles.value;
-      final rotation = vector.Vector3(old.x, old.y + 0.1, old.z);
-      node.eulerAngles.value = rotation;
-    });
+    this.arkitController.onAddNodeForAnchor = onAnchorWasFound;
   }
-  
+
+  void onAnchorWasFound(ARKitAnchor anchor) {
+    if (anchor is ARKitImageAnchor) {
+      setState(() => anchorWasFound = true);
+
+      final material = ARKitMaterial(
+        lightingModelName: ARKitLightingModel.lambert,
+        diffuse: ARKitMaterialProperty(
+            image: 'images/earth.jpg'),
+      );
+      sphere = ARKitSphere(
+        materials: [material],
+        radius: 0.1,
+      );
+
+      final earthPosition = anchor.transform.getColumn(3);
+      final node = ARKitNode(
+        geometry: sphere,
+        position:
+        vector.Vector3(earthPosition.x, earthPosition.y, earthPosition.z),
+        eulerAngles: vector.Vector3.zero(),
+      );
+      arkitController.add(node);
+
+      timer = Timer.periodic(const Duration(milliseconds: 50), (timer) {
+        final old = node.eulerAngles;
+        final eulerAngles = vector.Vector3(old.value.x, old.value.y + 0.1, old.value.z);
+        node.eulerAngles.value = eulerAngles;
+      });
+    }
+  }
 
 
   onNodeTapHandler(List<String> nodesList) {

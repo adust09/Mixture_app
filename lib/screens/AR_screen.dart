@@ -4,8 +4,12 @@ import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
 import 'package:sensors/sensors.dart';
 import 'package:arkit_plugin/arkit_plugin.dart';
+import 'package:noise_meter/noise_meter.dart';
 import 'package:vector_math/vector_math_64.dart' as vector;
 import 'Result_screen.dart';
+
+double _noiseread;
+double _maxDeci = 0;
 
 class ARScreen extends StatefulWidget {
   static const routeName = '/ar';
@@ -22,6 +26,20 @@ class _ARScreenState extends State<ARScreen> with SingleTickerProviderStateMixin
   Timer timer;
   bool anchorWasFound = false;
 
+  //Noise
+  bool _isRecording = false;
+  bool _isButtonDisabled;
+  StreamSubscription<NoiseReading> _noiseSubscription;
+  NoiseMeter _noiseMeter = new NoiseMeter();
+  bool _canVibrate = true;
+  final Iterable<Duration> pauses = [
+    const Duration(milliseconds: 500),
+    const Duration(milliseconds: 1000),
+    const Duration(milliseconds: 500),
+  ];
+
+
+  //Accel
   AnimationController _animationController;
   var _isScaledUp = false;
   static double _accelmaxX = 0;
@@ -63,6 +81,47 @@ class _ARScreenState extends State<ARScreen> with SingleTickerProviderStateMixin
     }));
   }
 
+  void onData(NoiseReading noiseReading) {
+    this.setState(() {
+      if (!this._isRecording) {
+        this._isRecording = true;
+      }
+    });
+    if(_maxDeci < noiseReading.maxDecibel){
+      _maxDeci = noiseReading.maxDecibel;
+      if(_maxDeci > 80){
+
+        // setState(() {
+        //   _isButtonDisabled = true;
+        // });
+      }
+    }
+    _noiseread = noiseReading.maxDecibel;
+    print(noiseReading.toString());
+  }
+
+  void start() async {
+    try {
+      _noiseSubscription = _noiseMeter.noiseStream.listen(onData);
+    } catch (err) {
+      print(err);
+    }
+  }
+
+  void stop() async {
+    try {
+      if (_noiseSubscription != null) {
+        _noiseSubscription.cancel();
+        _noiseSubscription = null;
+      }
+      this.setState(() {
+        this._isRecording = false;
+      });
+    } catch (err) {
+      print('stopRecorder error: $err');
+    }
+  }
+
   @override
   void dispose() {
     timer?.cancel();
@@ -82,6 +141,9 @@ class _ARScreenState extends State<ARScreen> with SingleTickerProviderStateMixin
     return Scaffold(
       floatingActionButton: FloatingActionButton(
         onPressed: () {
+          if(!_isRecording){
+            start();
+          }
           if (_isScaledUp) {
             _animationController.reverse();
           } else {
@@ -125,15 +187,15 @@ class _ARScreenState extends State<ARScreen> with SingleTickerProviderStateMixin
               Align(
                 child: Column(
                   children: [
-                    Padding(
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: <Widget>[
-                          Text('Accelerometer: $accelerometer'),
-                        ],
-                      ),
-                      padding: const EdgeInsets.all(16.0),
-                    ),
+                    // Padding(
+                    //   child: Row(
+                    //     mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    //     children: <Widget>[
+                    //       Text('Accelerometer: $accelerometer'),
+                    //     ],
+                    //   ),
+                    //   padding: const EdgeInsets.all(16.0),
+                    // ),
                     Center(
                       child: SizeTransition(
                         axis: Axis.vertical, // default
@@ -144,8 +206,9 @@ class _ARScreenState extends State<ARScreen> with SingleTickerProviderStateMixin
                         )
                             .drive(
                           Tween<double>(
-                            begin: 0.01,
-                            end: _countup_accel * 0.01,
+                            begin: 0.1,
+                            // end: _countup_accel * 0.01,
+                            end: _maxDeci*0.01,
                           ),
                         ),
                         child: Column(
@@ -225,6 +288,9 @@ class _ARScreenState extends State<ARScreen> with SingleTickerProviderStateMixin
       builder: (BuildContext context) =>
           AlertDialog(content: Text('宝を見つけました！おめでとう！')),
     );
+    this.setState(() {
+      this._isRecording = false;
+    });
     Navigator.of(context)
         .push(MaterialPageRoute(builder: (context) => ResultScreen()));
   }

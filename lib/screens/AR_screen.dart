@@ -46,6 +46,7 @@ class _ARScreenState extends State<ARScreen> with SingleTickerProviderStateMixin
   static double _accelmaxY = 0;
   static double _accelmaxZ = 0;
   static double _countup_accel = 0;
+  static double _countup_opacity = 0;
   List<double> _accelerometerValues;
   List<StreamSubscription<dynamic>> _streamSubscriptions =
   <StreamSubscription<dynamic>>[];
@@ -69,6 +70,11 @@ class _ARScreenState extends State<ARScreen> with SingleTickerProviderStateMixin
 
       if (event.x > 50) {
         _countup_accel++;
+        if(_countup_opacity < 9){
+          _countup_opacity++;
+        }else{
+          _countup_opacity = 10;
+        }
       }
       setState(() {
         _accelerometerValues = <double>[
@@ -151,7 +157,7 @@ class _ARScreenState extends State<ARScreen> with SingleTickerProviderStateMixin
           }
           _isScaledUp = !_isScaledUp;
         },
-        child: const Icon(Icons.refresh),
+        child: _isRecording ? Icon(Icons.refresh) : Icon(Icons.mic),
       ),
       appBar: AppBar(title: const Text('アクションをしろ！')),
       body: SafeArea(
@@ -207,25 +213,18 @@ class _ARScreenState extends State<ARScreen> with SingleTickerProviderStateMixin
                             .drive(
                           Tween<double>(
                             begin: 0.1,
-                            // end: _countup_accel * 0.01,
-                            end: _maxDeci*0.01,
+                            end: _countup_accel * 0.01,
+                            // end: _maxDeci*0.01,
                           ),
                         ),
                         child: Column(
                           children: [
-                            Row(
+                            new Wrap(
                               children: <Widget>[
                                 Image.network(
-                                    "https://avatars0.githubusercontent.com/u/55534054?s=460&u=402783902455ae84995129488dd3a12d0699fd84&v=4"),
-                                Positioned.fill(
-                                  child: BackdropFilter(
-                                    filter: ImageFilter.blur(
-                                        sigmaX: 10, sigmaY: 10),
-                                    child: Container(
-                                      color: Colors.black.withOpacity(1),
-                                    ),
-                                  ),
+                                    "https://avatars0.githubusercontent.com/u/55534054?s=460&u=402783902455ae84995129488dd3a12d0699fd84&v=4",fit: BoxFit.cover
                                 ),
+
                               ],
                             ),
                           ],
@@ -234,10 +233,19 @@ class _ARScreenState extends State<ARScreen> with SingleTickerProviderStateMixin
                     ),
                   ],
                 ),
-              )
+              ),
+              Positioned.fill(
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(
+                      sigmaX: 10, sigmaY: 10),
+                  child: new Container(
+                    // color: Colors.black.withOpacity(0),
+                    // decoration: BoxDecoration(color: _isRecording ? Colors.white.withOpacity(1-_maxDeci*0.01) : Colors.white.withOpacity(1.0)),
+                    decoration: BoxDecoration(color: _countup_accel > 9 ? Colors.white.withOpacity(0) : Colors.white.withOpacity(1-_countup_opacity*0.1)),
+                  ),
+                ),
+              ),
             ],
-
-
           )
       ),
     );

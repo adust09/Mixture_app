@@ -7,6 +7,7 @@ import 'package:arkit_plugin/arkit_plugin.dart';
 import 'package:noise_meter/noise_meter.dart';
 import 'package:vector_math/vector_math_64.dart' as vector;
 import 'Result_screen.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 
 double _noiseread;
 double _maxDeci = 0;
@@ -266,7 +267,7 @@ class _ARScreenState extends State<ARScreen> with SingleTickerProviderStateMixin
       final material = ARKitMaterial(
         lightingModelName: ARKitLightingModel.lambert,
         diffuse: ARKitMaterialProperty(
-            image: 'images/earth.jpg'),
+            image: 'images/emoji1.png'),
       );
       sphere = ARKitSphere(
         materials: [material],

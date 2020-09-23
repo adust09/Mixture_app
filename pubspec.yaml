@@ -25,6 +25,8 @@ dependencies:
     sdk: flutter
   sensors: ^0.4.2+4
   noise_meter: ^1.2.0+1
+  firebase_storage: ^4.0.0
+  image_picker: ^0.6.7+11
 
 
   # The following adds the Cupertino Icons font to your application.
@@ -52,6 +54,8 @@ flutter:
     - images/earth.jpg
     - images/background_image.jpg
     - images/background_image1.jpg
+    - images/pien.png
+    - images/emoji1.png
   #   - images/a_dot_ham.jpeg
 
   # An image asset can refer to one or more resolution-specific "variants", see

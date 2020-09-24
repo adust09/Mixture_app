@@ -20,7 +20,8 @@ class ARScreen extends StatefulWidget {
   _ARScreenState createState() => _ARScreenState();
 }
 
-class _ARScreenState extends State<ARScreen> with SingleTickerProviderStateMixin{
+class _ARScreenState extends State<ARScreen>
+    with SingleTickerProviderStateMixin {
   ARKitController arkitController;
   ARKitSphere sphere;
   Timer timer;
@@ -38,7 +39,6 @@ class _ARScreenState extends State<ARScreen> with SingleTickerProviderStateMixin
     const Duration(milliseconds: 500),
   ];
 
-
   //Accel
   AnimationController _animationController;
   var _isScaledUp = false;
@@ -49,7 +49,7 @@ class _ARScreenState extends State<ARScreen> with SingleTickerProviderStateMixin
   static double _countup_opacity = 0;
   List<double> _accelerometerValues;
   List<StreamSubscription<dynamic>> _streamSubscriptions =
-  <StreamSubscription<dynamic>>[];
+      <StreamSubscription<dynamic>>[];
 
   @override
   void initState() {
@@ -70,9 +70,9 @@ class _ARScreenState extends State<ARScreen> with SingleTickerProviderStateMixin
 
       if (event.x > 50) {
         _countup_accel++;
-        if(_countup_opacity < 9){
+        if (_countup_opacity < 9) {
           _countup_opacity++;
-        }else{
+        } else {
           _countup_opacity = 10;
         }
       }
@@ -93,10 +93,9 @@ class _ARScreenState extends State<ARScreen> with SingleTickerProviderStateMixin
         this._isRecording = true;
       }
     });
-    if(_maxDeci < noiseReading.maxDecibel){
+    if (_maxDeci < noiseReading.maxDecibel) {
       _maxDeci = noiseReading.maxDecibel;
-      if(_maxDeci > 80){
-
+      if (_maxDeci > 80) {
         // setState(() {
         //   _isButtonDisabled = true;
         // });
@@ -137,17 +136,16 @@ class _ARScreenState extends State<ARScreen> with SingleTickerProviderStateMixin
     for (StreamSubscription<dynamic> subscription in _streamSubscriptions) {
       subscription.cancel();
     }
-
   }
 
   @override
   Widget build(BuildContext context) {
     final List<String> accelerometer =
-    _accelerometerValues?.map((double v) => v.toStringAsFixed(1))?.toList();
+        _accelerometerValues?.map((double v) => v.toStringAsFixed(1))?.toList();
     return Scaffold(
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          if(!_isRecording){
+          if (!_isRecording) {
             start();
           }
           if (_isScaledUp) {
@@ -162,94 +160,95 @@ class _ARScreenState extends State<ARScreen> with SingleTickerProviderStateMixin
       appBar: AppBar(title: const Text('アクションをしろ！')),
       body: SafeArea(
           child: new Stack(
-            fit: StackFit.expand,
-            children: <Widget>[
-              Align(
-                child: ARKitSceneView(
-                  detectionImages: const [
-                    ARKitReferenceImage(
-                      name: 'https://avatars0.githubusercontent.com/u/55534054?s=460&u=402783902455ae84995129488dd3a12d0699fd84&v=4',
-                      //ここにfirebaseのCloud storageから取得した画像情報を格納する。→隠し場所
-                      physicalWidth: 0.2,
-                    ),
-                  ],
-                  onARKitViewCreated: onARKitViewCreated,
-                  enableTapRecognizer: true,
+        fit: StackFit.expand,
+        children: <Widget>[
+          Align(
+            child: ARKitSceneView(
+              detectionImages: const [
+                ARKitReferenceImage(
+                  name:
+                      'https://avatars0.githubusercontent.com/u/55534054?s=460&u=402783902455ae84995129488dd3a12d0699fd84&v=4',
+                  //ここにfirebaseのCloud storageから取得した画像情報を格納する。→隠し場所
+                  physicalWidth: 0.2,
                 ),
-              ),
-              anchorWasFound
-                  ? Container()
-                  : Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Text(
-                  '隠したオブジェクトを見つけてね！',
-                  style: Theme
-                      .of(context)
-                      .textTheme
-                      .headline5
-                      .copyWith(color: Colors.white),
+              ],
+              onARKitViewCreated: onARKitViewCreated,
+              enableTapRecognizer: true,
+            ),
+          ),
+          anchorWasFound
+              ? Container()
+              : Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Text(
+                    '隠したオブジェクトを見つけてね！',
+                    style: Theme.of(context)
+                        .textTheme
+                        .headline5
+                        .copyWith(color: Colors.white),
+                  ),
                 ),
-              ),
-              Align(
-                child: Column(
-                  children: [
-                    // Padding(
-                    //   child: Row(
-                    //     mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    //     children: <Widget>[
-                    //       Text('Accelerometer: $accelerometer'),
-                    //     ],
-                    //   ),
-                    //   padding: const EdgeInsets.all(16.0),
-                    // ),
-                    Center(
-                      child: SizeTransition(
-                        axis: Axis.vertical, // default
-                        axisAlignment: 0,
-                        sizeFactor: _animationController
-                            .drive(
+          Align(
+            child: Column(
+              children: [
+                // Padding(
+                //   child: Row(
+                //     mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                //     children: <Widget>[
+                //       Text('Accelerometer: $accelerometer'),
+                //     ],
+                //   ),
+                //   padding: const EdgeInsets.all(16.0),
+                // ),
+                Center(
+                  child: SizeTransition(
+                    axis: Axis.vertical, // default
+                    axisAlignment: 0,
+                    sizeFactor: _animationController
+                        .drive(
                           CurveTween(curve: Curves.fastOutSlowIn),
                         )
-                            .drive(
+                        .drive(
                           Tween<double>(
                             begin: 0.1,
                             end: _countup_accel * 0.01,
                             // end: _maxDeci*0.01,
                           ),
                         ),
-                        child: Column(
-                          children: [
-                            new Wrap(
-                              children: <Widget>[
-                                Image.network(
-                                    "https://avatars0.githubusercontent.com/u/55534054?s=460&u=402783902455ae84995129488dd3a12d0699fd84&v=4",fit: BoxFit.cover
-                                ),
-
-                              ],
-                            ),
+                    child: Column(
+                      children: [
+                        new Wrap(
+                          children: <Widget>[
+                            Image.network(
+                                "https://avatars0.githubusercontent.com/u/55534054?s=460&u=402783902455ae84995129488dd3a12d0699fd84&v=4",
+                                fit: BoxFit.cover),
                           ],
                         ),
-                      ),
+                      ],
                     ),
-                  ],
-                ),
-              ),
-              Positioned.fill(
-                child: BackdropFilter(
-                  filter: ImageFilter.blur(
-                      sigmaX: 10, sigmaY: 10),
-                  child: new Container(
-                    // color: Colors.black.withOpacity(0),
-                    // decoration: BoxDecoration(color: _isRecording ? Colors.white.withOpacity(1-_maxDeci*0.01) : Colors.white.withOpacity(1.0)),
-                    decoration: BoxDecoration(color: _countup_accel > 9 ? Colors.white.withOpacity(0) : Colors.white.withOpacity(1-_countup_opacity*0.1)),
                   ),
                 ),
+              ],
+            ),
+          ),
+          Positioned.fill(
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+              child: new Container(
+                // color: Colors.black.withOpacity(0),
+                // decoration: BoxDecoration(color: _isRecording ? Colors.white.withOpacity(1-_maxDeci*0.01) : Colors.white.withOpacity(1.0)),
+                decoration: BoxDecoration(
+                    color: _countup_accel > 9
+                        ? Colors.white.withOpacity(0)
+                        : Colors.white.withOpacity(1 - _countup_opacity * 0.1)),
               ),
-            ],
-          )
-      ),
+            ),
+          ),
+        ],
+      )),
     );
   }
+
   void onARKitViewCreated(ARKitController arKitController) {
     this.arkitController = arKitController;
     this.arkitController.onNodeTap = (nodes) => onNodeTapHandler(nodes);
@@ -262,8 +261,7 @@ class _ARScreenState extends State<ARScreen> with SingleTickerProviderStateMixin
 
       final material = ARKitMaterial(
         lightingModelName: ARKitLightingModel.lambert,
-        diffuse: ARKitMaterialProperty(
-            image: 'images/earth.jpg'),
+        diffuse: ARKitMaterialProperty(image: 'images/earth.jpg'),
       );
       sphere = ARKitSphere(
         materials: [material],
@@ -274,19 +272,19 @@ class _ARScreenState extends State<ARScreen> with SingleTickerProviderStateMixin
       final node = ARKitNode(
         geometry: sphere,
         position:
-        vector.Vector3(earthPosition.x, earthPosition.y, earthPosition.z),
+            vector.Vector3(earthPosition.x, earthPosition.y, earthPosition.z),
         eulerAngles: vector.Vector3.zero(),
       );
       arkitController.add(node);
 
       timer = Timer.periodic(const Duration(milliseconds: 50), (timer) {
         final old = node.eulerAngles;
-        final eulerAngles = vector.Vector3(old.value.x, old.value.y + 0.1, old.value.z);
+        final eulerAngles =
+            vector.Vector3(old.value.x, old.value.y + 0.1, old.value.z);
         node.eulerAngles.value = eulerAngles;
       });
     }
   }
-
 
   onNodeTapHandler(List<String> nodesList) {
     final name = nodesList.first;

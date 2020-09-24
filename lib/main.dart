@@ -5,9 +5,8 @@ void main() => runApp(MaterialApp(home: MyApp()));
 
 class MyApp extends StatelessWidget {
 
-
   @override
-  Widget build(BuildContext context){
+  Widget build(BuildContext context) {
     return MaterialApp(
         title: 'mixture',
         home: HomeScreen()

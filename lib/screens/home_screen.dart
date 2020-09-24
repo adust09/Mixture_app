@@ -20,7 +20,8 @@ class _HomeScreenState extends State<HomeScreen> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
             RaisedButton(
-                child: Text('Press This Button', style: TextStyle(fontSize: 20)),
+                child:
+                    Text('Press This Button', style: TextStyle(fontSize: 20)),
                 onPressed: () => Navigator.of(context)
                     .push(MaterialPageRoute(builder: (context) => ARScreen())))
           ],

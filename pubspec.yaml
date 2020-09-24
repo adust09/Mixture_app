@@ -29,6 +29,7 @@ dependencies:
   sensors: ^0.4.2+4
   noise_meter: ^1.2.0+1
   image_picker: ^0.6.7+11
+  uuid: 2.2.2
 
 
   # The following adds the Cupertino Icons font to your application.

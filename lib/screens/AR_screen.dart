@@ -7,13 +7,15 @@ import 'package:arkit_plugin/arkit_plugin.dart';
 import 'package:noise_meter/noise_meter.dart';
 import 'package:vector_math/vector_math_64.dart' as vector;
 import 'Result_screen.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 
 double _noiseread;
 double _maxDeci = 0;
 
 class ARScreen extends StatefulWidget {
-  static const routeName = '/ar';
 
+  static const routeName = '/ar';
   const ARScreen({Key key}) : super(key: key);
 
   @override
@@ -22,6 +24,7 @@ class ARScreen extends StatefulWidget {
 
 class _ARScreenState extends State<ARScreen>
     with SingleTickerProviderStateMixin {
+
   ARKitController arkitController;
   ARKitSphere sphere;
   Timer timer;

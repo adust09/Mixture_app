@@ -1,30 +1,126 @@
 import 'dart:async';
 import 'dart:ui';
-import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:sensors/sensors.dart';
 import 'package:arkit_plugin/arkit_plugin.dart';
 import 'package:noise_meter/noise_meter.dart';
 import 'package:vector_math/vector_math_64.dart' as vector;
 import 'Result_screen.dart';
-import 'package:firebase_storage/firebase_storage.dart';
+import 'package:flutter/foundation.dart';
 
-double _noiseread;
 double _maxDeci = 0;
-String _imagePath= "";
 
 class ARScreen extends StatefulWidget {
   static const routeName = '/ar';
 
   const ARScreen({Key key}) : super(key: key);
-  // final String imagePath;
 
 
   @override
   _ARScreenState createState() => _ARScreenState();
 }
 
-class _ARScreenState extends State<ARScreen> with SingleTickerProviderStateMixin{
+class _ARScreenState extends State<ARScreen>
+    with SingleTickerProviderStateMixin {
+  PickedFile _imageFile;
+  dynamic _pickImageError;
+  bool isVideo = false;
+  String _retrieveDataError;
+  final ImagePicker _picker = ImagePicker();
+  final TextEditingController maxWidthController = TextEditingController();
+  final TextEditingController maxHeightController = TextEditingController();
+  final TextEditingController qualityController = TextEditingController();
+
+  Future<void> _displayPickImageDialog(
+      BuildContext context, OnPickImageCallback onPick) async {
+    return showDialog(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            title: Text('写真を撮って宝を隠す？'),
+            actions: <Widget>[
+              FlatButton(
+                child: const Text('やめとく'),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+              ),
+              FlatButton(
+                  child: const Text('もちろん'),
+                  onPressed: () {
+                    double width = maxWidthController.text.isNotEmpty
+                        ? double.parse(maxWidthController.text)
+                        : null;
+                    double height = maxHeightController.text.isNotEmpty
+                        ? double.parse(maxHeightController.text)
+                        : null;
+                    int quality = qualityController.text.isNotEmpty
+                        ? int.parse(qualityController.text)
+                        : null;
+                    onPick(width, height, quality);
+                    Navigator.of(context).pop();
+                  }),
+            ],
+          );
+        });
+  }
+
+  void _onImageButtonPressed(ImageSource source, {BuildContext context}) async {
+    await _displayPickImageDialog(context,
+            (double maxWidth, double maxHeight, int quality) async {
+          try {
+            final pickedFile = await _picker.getImage(
+              source: source,
+              maxWidth: maxWidth,
+              maxHeight: maxHeight,
+              imageQuality: quality,
+            );
+            setState(() {
+              _imageFile = pickedFile;
+            });
+          } catch (e) {
+            setState(() {
+              _pickImageError = e;
+            });
+          }
+        });
+
+  }
+  Text _getRetrieveErrorWidget() {
+    if (_retrieveDataError != null) {
+      final Text result = Text(_retrieveDataError);
+      _retrieveDataError = null;
+      return result;
+    }
+    return null;
+  }
+
+  Widget _previewImage() {
+    final Text retrieveError = _getRetrieveErrorWidget();
+    if (retrieveError != null) {
+      return retrieveError;
+    }
+    if (_imageFile != null) {
+      if (kIsWeb) {
+        // Why network?
+        // See https://pub.dev/packages/image_picker#getting-ready-for-the-web-platform
+        return Image.network(_imageFile.path);
+      }
+    } else if (_pickImageError != null) {
+      return Text(
+        'Pick image error: $_pickImageError',
+        textAlign: TextAlign.center,
+      );
+    } else {
+      return const Text(
+        'You have not yet picked an image.',
+        textAlign: TextAlign.center,
+      );
+    }
+  }
+
+
   ARKitController arkitController;
   ARKitSphere sphere;
   Timer timer;
@@ -42,7 +138,6 @@ class _ARScreenState extends State<ARScreen> with SingleTickerProviderStateMixin
     const Duration(milliseconds: 500),
   ];
 
-
   //Accel
   AnimationController _animationController;
   var _isScaledUp = false;
@@ -54,7 +149,9 @@ class _ARScreenState extends State<ARScreen> with SingleTickerProviderStateMixin
   static double _countup_maxdesi = 0;
   List<double> _accelerometerValues;
   List<StreamSubscription<dynamic>> _streamSubscriptions =
-  <StreamSubscription<dynamic>>[];
+      <StreamSubscription<dynamic>>[];
+
+  // _ARScreenState(a);
 
   @override
   void initState() {
@@ -75,9 +172,9 @@ class _ARScreenState extends State<ARScreen> with SingleTickerProviderStateMixin
 
       if (event.x > 60) {
         _countup_accel++;
-        if(_countup_opacity < 100){
+        if (_countup_opacity < 100) {
           _countup_opacity++;
-        }else{
+        } else {
           _countup_opacity = 100;
         }
       }
@@ -98,16 +195,11 @@ class _ARScreenState extends State<ARScreen> with SingleTickerProviderStateMixin
         this._isRecording = true;
       }
     });
-    if(_maxDeci < noiseReading.maxDecibel){
-      // _maxDeci = noiseReading.maxDecibel;
-      if( noiseReading.maxDecibel > 40){
-          _countup_maxdesi++;
-        // setState(() {
-        //   _isButtonDisabled = true;
-        // });
+    if (_maxDeci < noiseReading.maxDecibel) {
+      if (noiseReading.maxDecibel > 40) {
+        _countup_maxdesi++;
       }
     }
-    _noiseread = noiseReading.maxDecibel;
     print(noiseReading.toString());
   }
 
@@ -142,50 +234,89 @@ class _ARScreenState extends State<ARScreen> with SingleTickerProviderStateMixin
     for (StreamSubscription<dynamic> subscription in _streamSubscriptions) {
       subscription.cancel();
     }
-
   }
 
   @override
   Widget build(BuildContext context) {
     final List<String> accelerometer =
-    _accelerometerValues?.map((double v) => v.toStringAsFixed(1))?.toList();
-    if(_countup_accel < 100) {
+        _accelerometerValues?.map((double v) => v.toStringAsFixed(1))?.toList();
+    if (_countup_accel < 100) {
+      String _name = _imageFile.path;
       return Scaffold(
         body: SafeArea(
             child: new Stack(
-              children: <Widget>[
-                Align(
-                  child: ARKitSceneView(
-                    detectionImages: const [
-                      ARKitReferenceImage(
-                        name: 'https://pbs.twimg.com/media/EikdSyXUYAE_R51?format=jpg&name=medium',
-                        //ここにfirebaseのCloud storageから取得した画像情報を格納する。→隠し場所
-                        // name: imagePath,
-                        physicalWidth: 0.2,
-                      ),
-                    ],
-                    onARKitViewCreated: onARKitViewCreated,
-                    enableTapRecognizer: true,
+          children: <Widget>[
+            Align(
+              child: ARKitSceneView(
+                detectionImages: const [
+                  ARKitReferenceImage(
+                    name: "_name",
+                    //ここにfirebaseのCloud storageから取得した画像情報を格納する。→隠し場所
+                    // name: imagePath,
+                    physicalWidth: 0.2
                   ),
+                ],
+                onARKitViewCreated: onARKitViewCreated,
+                enableTapRecognizer: true,
+              ),
+            ),
+            Positioned.fill(
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                child: new Container(
+                  // color: Colors.black.withOpacity(0),
+                  // decoration: BoxDecoration(color: _isRecording ? Colors.white.withOpacity(1-_maxDeci*0.01) : Colors.white.withOpacity(1.0)),
+                  decoration: BoxDecoration(
+                      color: Colors.white
+                          .withOpacity(1 - _countup_opacity * 0.01)),
                 ),
-                Positioned.fill(
-                  child: BackdropFilter(
-                    filter: ImageFilter.blur(
-                        sigmaX: 10, sigmaY: 10),
-                    child: new Container(
-                      // color: Colors.black.withOpacity(0),
-                      // decoration: BoxDecoration(color: _isRecording ? Colors.white.withOpacity(1-_maxDeci*0.01) : Colors.white.withOpacity(1.0)),
-                      decoration: BoxDecoration(color: Colors.white.withOpacity(
-                          1 - _countup_opacity * 0.01)),
-                    ),
+              ),
+            ),
+            Padding(
+              padding: EdgeInsets.all(0),
+              child: !kIsWeb && defaultTargetPlatform == TargetPlatform.android
+                  ? FutureBuilder<void>(
+                builder: (BuildContext context, AsyncSnapshot<void> snapshot) {
+                  switch (snapshot.connectionState) {
+                    case ConnectionState.none:
+                    case ConnectionState.waiting:
+                      return const Text(
+                        'You have not yet picked an image.',
+                        textAlign: TextAlign.center,
+                      );
+                    case ConnectionState.done:
+                      return _previewImage();
+                    default:
+                      if (snapshot.hasError) {
+                        return Text(
+                          'Pick image/video error: ${snapshot.error}}',
+                          textAlign: TextAlign.center,
+                        );
+                      } else {
+                        return const Text(
+                          'You have not yet picked an image.',
+                          textAlign: TextAlign.center,
+                        );
+                      }
+                  }
+                },
+              )
+                  : _previewImage(),
+            ),
+            _imageFile == null ?Align(
+              child:RaisedButton.icon(
+                  icon: Icon(
+                    Icons.camera_alt,
+                    color: Colors.white,
                   ),
-                ),
-              ],
-            )
-        ),
+                  label: Text('隠して相手に渡そう！',style: TextStyle(fontSize: 20)), color:Colors.green,shape: StadiumBorder(),
+                  onPressed: () =>_onImageButtonPressed(ImageSource.camera, context: context)),
+            ):Text(""),
+          ],
+        )),
       );
-    }else{
-      if(_countup_maxdesi * 0.1 < 1) {
+    } else {
+      if (_countup_maxdesi * 0.1 < 1) {
         return Scaffold(
           floatingActionButton: FloatingActionButton(
             onPressed: () {
@@ -204,61 +335,60 @@ class _ARScreenState extends State<ARScreen> with SingleTickerProviderStateMixin
           appBar: AppBar(title: const Text('アクションをしろ！')),
           body: SafeArea(
               child: new Stack(
-                fit: StackFit.expand,
-                children: <Widget>[
-                  Align(
-                    child: ARKitSceneView(
-                      detectionImages: const [
-                        ARKitReferenceImage(
-                          name: 'https://pbs.twimg.com/media/EikdSyXUYAE_R51?format=jpg&name=medium',
-                          //ここにfirebaseのCloud storageから取得した画像情報を格納する。→隠し場所
-                          physicalWidth: 0.2,
-                        ),
-                      ],
-                      onARKitViewCreated: onARKitViewCreated,
-                      enableTapRecognizer: true,
+            fit: StackFit.expand,
+            children: <Widget>[
+              Align(
+                child: ARKitSceneView(
+                  detectionImages: const [
+                    ARKitReferenceImage(
+                      name:
+                          'https://pbs.twimg.com/media/EikdSyXUYAE_R51?format=jpg&name=medium',
+                      //ここにfirebaseのCloud storageから取得した画像情報を格納する。→隠し場所
+                      physicalWidth: 0.2,
                     ),
-                  ),
-                  Align(
-                    child: Column(
-                      children: [
-                        Center(
-                          child: SizeTransition(
-                            axis: Axis.vertical, // default
-                            axisAlignment: 0,
-                            sizeFactor: _animationController
-                                .drive(
+                  ],
+                  onARKitViewCreated: onARKitViewCreated,
+                  enableTapRecognizer: true,
+                ),
+              ),
+              Align(
+                child: Column(
+                  children: [
+                    Center(
+                      child: SizeTransition(
+                        axis: Axis.vertical, // default
+                        axisAlignment: 0,
+                        sizeFactor: _animationController
+                            .drive(
                               CurveTween(curve: Curves.fastOutSlowIn),
                             )
-                                .drive(
+                            .drive(
                               Tween<double>(
                                 begin: 0,
                                 end: _countup_maxdesi * 0.1,
                                 // end: _maxDeci*0.01,
                               ),
                             ),
-                            child: Column(
-                              children: [
-                                new Wrap(
-                                  children: <Widget>[
-                                    Image.network(
-                                        "https://pbs.twimg.com/media/EikdSyXUYAE_R51?format=jpg&name=medium",
-                                        fit: BoxFit.cover
-                                    ),
-                                  ],
-                                ),
+                        child: Column(
+                          children: [
+                            new Wrap(
+                              children: <Widget>[
+                                Image.network(
+                                    _imageFile.path,
+                                    fit: BoxFit.cover),
                               ],
                             ),
-                          ),
+                          ],
                         ),
-                      ],
+                      ),
                     ),
-                  ),
-                ],
-              )
-          ),
+                  ],
+                ),
+              ),
+            ],
+          )),
         );
-      }else{
+      } else {
         return Scaffold(
           floatingActionButton: FloatingActionButton(
             onPressed: () {
@@ -277,62 +407,61 @@ class _ARScreenState extends State<ARScreen> with SingleTickerProviderStateMixin
           appBar: AppBar(title: const Text('アクション成功！')),
           body: SafeArea(
               child: new Stack(
-                fit: StackFit.expand,
-                children: <Widget>[
-                  Align(
-                    child: ARKitSceneView(
-                      detectionImages: const [
-                        ARKitReferenceImage(
-                          name: 'https://pbs.twimg.com/media/EikdSyXUYAE_R51?format=jpg&name=medium',
-                          //ここにfirebaseのCloud storageから取得した画像情報を格納する。→隠し場所
-                          physicalWidth: 0.2,
-                        ),
-                      ],
-                      onARKitViewCreated: onARKitViewCreated,
-                      enableTapRecognizer: true,
+            fit: StackFit.expand,
+            children: <Widget>[
+              Align(
+                child: ARKitSceneView(
+                  detectionImages: const [
+                    ARKitReferenceImage(
+                      name:" _imageFile.path.toString()",
+                      //ここにfirebaseのCloud storageから取得した画像情報を格納する。→隠し場所
+                      physicalWidth: 0.2,
                     ),
-                  ),
-                  Align(
-                    child: Column(
-                      children: [
-                        Center(
-                          child: SizeTransition(
-                            axis: Axis.vertical, // default
-                            axisAlignment: 0,
-                            sizeFactor: _animationController
-                                .drive(
+                  ],
+                  onARKitViewCreated: onARKitViewCreated,
+                  enableTapRecognizer: true,
+                ),
+              ),
+              Align(
+                child: Column(
+                  children: [
+                    Center(
+                      child: SizeTransition(
+                        axis: Axis.vertical, // default
+                        axisAlignment: 0,
+                        sizeFactor: _animationController
+                            .drive(
                               CurveTween(curve: Curves.fastOutSlowIn),
                             )
-                                .drive(
+                            .drive(
                               Tween<double>(
                                 begin: 0,
                                 end: 1,
                               ),
                             ),
-                            child: Column(
-                              children: [
-                                new Wrap(
-                                  children: <Widget>[
-                                    Image.network(
-                                        "https://pbs.twimg.com/media/EikdSyXUYAE_R51?format=jpg&name=medium",
-                                        fit: BoxFit.cover
-                                    ),
-                                  ],
-                                ),
+                        child: Column(
+                          children: [
+                            new Wrap(
+                              children: <Widget>[
+                                Image.network(
+                                    _imageFile.path,
+                                    fit: BoxFit.cover),
                               ],
                             ),
-                          ),
+                          ],
                         ),
-                      ],
+                      ),
                     ),
-                  ),
-                ],
-              )
-          ),
+                  ],
+                ),
+              ),
+            ],
+          )),
         );
       }
     }
   }
+
   void onARKitViewCreated(ARKitController arKitController) {
     this.arkitController = arKitController;
     this.arkitController.onNodeTap = (nodes) => onNodeTapHandler(nodes);
@@ -345,8 +474,7 @@ class _ARScreenState extends State<ARScreen> with SingleTickerProviderStateMixin
 
       final material = ARKitMaterial(
         lightingModelName: ARKitLightingModel.lambert,
-        diffuse: ARKitMaterialProperty(
-            image: 'images/emoji1.png'),
+        diffuse: ARKitMaterialProperty(image: 'images/emoji1.png'),
       );
       sphere = ARKitSphere(
         materials: [material],
@@ -357,19 +485,19 @@ class _ARScreenState extends State<ARScreen> with SingleTickerProviderStateMixin
       final node = ARKitNode(
         geometry: sphere,
         position:
-        vector.Vector3(earthPosition.x, earthPosition.y, earthPosition.z),
+            vector.Vector3(earthPosition.x, earthPosition.y, earthPosition.z),
         eulerAngles: vector.Vector3.zero(),
       );
       arkitController.add(node);
 
       timer = Timer.periodic(const Duration(milliseconds: 50), (timer) {
         final old = node.eulerAngles;
-        final eulerAngles = vector.Vector3(old.value.x, old.value.y + 0.1, old.value.z);
+        final eulerAngles =
+            vector.Vector3(old.value.x, old.value.y + 0.1, old.value.z);
         node.eulerAngles.value = eulerAngles;
       });
     }
   }
-
 
   onNodeTapHandler(List<String> nodesList) {
     final name = nodesList.first;
@@ -385,4 +513,7 @@ class _ARScreenState extends State<ARScreen> with SingleTickerProviderStateMixin
     Navigator.of(context)
         .push(MaterialPageRoute(builder: (context) => ResultScreen()));
   }
+
 }
+typedef void OnPickImageCallback(
+    double maxWidth, double maxHeight, int quality);

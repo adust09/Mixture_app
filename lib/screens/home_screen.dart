@@ -174,23 +174,23 @@ class _HomeScreenState extends State<HomeScreen> {
                 children: <Widget>[
 
                   Image.asset("images/logo.png"),
-                  RaisedButton.icon(
+                  _imageFile != null ? RaisedButton.icon(
                       icon: Icon(
                         Icons.directions_run,
                         color: Colors.white,
                       ),
                       label: Text('HUNTER',style: TextStyle(fontSize: 20)), color:Colors.lightBlue,shape: StadiumBorder(),
                       onPressed: () => Navigator.of(context)
-                          .push(MaterialPageRoute(builder: (context) => ARScreen()))),
-
-                  RaisedButton.icon(
+                          .push(MaterialPageRoute(builder: (context) => ARScreen()))):RaisedButton.icon(
                       icon: Icon(
                         Icons.camera_alt,
                         color: Colors.white,
                       ),
-                      label: Text('HIDAR',style: TextStyle(fontSize: 20)), color:Colors.green,shape: StadiumBorder(),
-                      onPressed: () =>_onImageButtonPressed(ImageSource.camera, context: context))
-                ],
+                      label: Text('バトル！',style: TextStyle(fontSize: 20)), color:Colors.green,shape: StadiumBorder(),
+                      onPressed: () => Navigator.of(context)
+                          .push(MaterialPageRoute(builder: (context) => ARScreen())),
+
+                  )],
               ),
           ),
 

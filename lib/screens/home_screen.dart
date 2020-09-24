@@ -32,13 +32,14 @@ class _HomeScreenState extends State<HomeScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: <Widget>[
-                  Text("宝探しゲーム",style: TextStyle(
-                      fontSize: 48.0,
-                      fontStyle: FontStyle.italic,
-                      color: Colors.yellowAccent,
-                      shadows: [Shadow(color: Colors.greenAccent,blurRadius: 16.0)]
-                  ),
-                  ),
+                  // Text("宝探しゲーム",style: TextStyle(
+                  //     fontSize: 48.0,
+                  //     fontStyle: FontStyle.italic,
+                  //     color: Colors.yellowAccent,
+                  //     shadows: [Shadow(color: Colors.greenAccent,blurRadius: 16.0)]
+                  // ),
+                  // ),
+                  Image.asset("images/logo.png"),
                   RaisedButton.icon(
                       icon: Icon(
                         Icons.file_upload,

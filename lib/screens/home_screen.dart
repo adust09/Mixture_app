@@ -217,14 +217,6 @@ class AspectRatioVideo extends StatefulWidget {
 class AspectRatioVideoState extends State<AspectRatioVideo> {
   bool initialized = false;
 
-  void _onVideoControllerUpdate() {
-    if (!mounted) {
-      return;
-    }
-  }
-
-
-
   @override
   Widget build(BuildContext context) {
     // TODO: implement build

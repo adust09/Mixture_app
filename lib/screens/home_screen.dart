@@ -172,13 +172,8 @@ class _HomeScreenState extends State<HomeScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: <Widget>[
-                  Text("HUNTAR HIDAER",style: TextStyle(
-                      fontSize: 48.0,
-                      fontStyle: FontStyle.italic,
-                      color: Colors.yellowAccent,
-                      shadows: [Shadow(color: Colors.greenAccent,blurRadius: 16.0)]
-                  ),
-                  ),
+
+                  Image.asset("images/logo.png"),
                   RaisedButton.icon(
                       icon: Icon(
                         Icons.directions_run,

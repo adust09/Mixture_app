@@ -198,10 +198,7 @@ class _HomeScreenState extends State<HomeScreen> {
       )
     ]);
   }
-
 }
-
-
 
 typedef void OnPickImageCallback(
     double maxWidth, double maxHeight, int quality);
@@ -217,5 +214,4 @@ class AspectRatioVideoState extends State<AspectRatioVideo> {
     // TODO: implement build
     throw UnimplementedError();
   }
-
 }

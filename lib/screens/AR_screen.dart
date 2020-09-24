@@ -7,6 +7,7 @@ import 'package:arkit_plugin/arkit_plugin.dart';
 import 'package:noise_meter/noise_meter.dart';
 import 'package:vector_math/vector_math_64.dart' as vector;
 import 'Result_screen.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 
 double _noiseread;
@@ -14,8 +15,8 @@ double _maxDeci = 0;
 String _imagePath= "";
 
 class ARScreen extends StatefulWidget {
-  static const routeName = '/ar';
 
+  static const routeName = '/ar';
   const ARScreen({Key key}) : super(key: key);
   // final String imagePath;
 
@@ -24,7 +25,9 @@ class ARScreen extends StatefulWidget {
   _ARScreenState createState() => _ARScreenState();
 }
 
-class _ARScreenState extends State<ARScreen> with SingleTickerProviderStateMixin{
+class _ARScreenState extends State<ARScreen>
+    with SingleTickerProviderStateMixin {
+
   ARKitController arkitController;
   ARKitSphere sphere;
   Timer timer;
@@ -42,7 +45,6 @@ class _ARScreenState extends State<ARScreen> with SingleTickerProviderStateMixin
     const Duration(milliseconds: 500),
   ];
 
-
   //Accel
   AnimationController _animationController;
   var _isScaledUp = false;
@@ -54,7 +56,7 @@ class _ARScreenState extends State<ARScreen> with SingleTickerProviderStateMixin
   static double _countup_maxdesi = 0;
   List<double> _accelerometerValues;
   List<StreamSubscription<dynamic>> _streamSubscriptions =
-  <StreamSubscription<dynamic>>[];
+      <StreamSubscription<dynamic>>[];
 
   @override
   void initState() {
@@ -142,7 +144,6 @@ class _ARScreenState extends State<ARScreen> with SingleTickerProviderStateMixin
     for (StreamSubscription<dynamic> subscription in _streamSubscriptions) {
       subscription.cancel();
     }
-
   }
 
   @override
@@ -331,8 +332,9 @@ class _ARScreenState extends State<ARScreen> with SingleTickerProviderStateMixin
           ),
         );
       }
-    }
+   
   }
+
   void onARKitViewCreated(ARKitController arKitController) {
     this.arkitController = arKitController;
     this.arkitController.onNodeTap = (nodes) => onNodeTapHandler(nodes);
@@ -346,7 +348,7 @@ class _ARScreenState extends State<ARScreen> with SingleTickerProviderStateMixin
       final material = ARKitMaterial(
         lightingModelName: ARKitLightingModel.lambert,
         diffuse: ARKitMaterialProperty(
-            image: 'images/emoji1.png'),
+            image: 'images/emoji1.png')
       );
       sphere = ARKitSphere(
         materials: [material],
@@ -357,19 +359,19 @@ class _ARScreenState extends State<ARScreen> with SingleTickerProviderStateMixin
       final node = ARKitNode(
         geometry: sphere,
         position:
-        vector.Vector3(earthPosition.x, earthPosition.y, earthPosition.z),
+            vector.Vector3(earthPosition.x, earthPosition.y, earthPosition.z),
         eulerAngles: vector.Vector3.zero(),
       );
       arkitController.add(node);
 
       timer = Timer.periodic(const Duration(milliseconds: 50), (timer) {
         final old = node.eulerAngles;
-        final eulerAngles = vector.Vector3(old.value.x, old.value.y + 0.1, old.value.z);
+        final eulerAngles =
+            vector.Vector3(old.value.x, old.value.y + 0.1, old.value.z);
         node.eulerAngles.value = eulerAngles;
       });
     }
   }
-
 
   onNodeTapHandler(List<String> nodesList) {
     final name = nodesList.first;
